@@ -2,8 +2,8 @@ package com.sysmap.socialnetwork.services.user;
 
 import com.sysmap.socialnetwork.data.IUserRepository;
 import com.sysmap.socialnetwork.entities.User;
-import com.sysmap.socialnetwork.services.IEventService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -12,15 +12,19 @@ public class UserService implements IUserService {
     @Autowired
     private IUserRepository _userRepository;
     @Autowired
-    private IEventService _eventService;
+    private PasswordEncoder _passwordEncoder;
+
 
     public String createUser(CreateUserRequest request) {
+        var user = new User(request.name, request.email);
 
-        var user = new User(request.name, request.email, request.password);
+        if(!_userRepository.findUserByEmail(request.email).isEmpty()){
+            return null;
+        }
 
+        var hash = _passwordEncoder.encode(request.password);
+        user.setPassword(hash);
         _userRepository.save(user);
-        _eventService.send(user.getId().toString());
-
         return user.getId().toString();
     }
 
