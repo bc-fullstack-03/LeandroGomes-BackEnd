@@ -3,6 +3,7 @@ package com.sysmap.socialnetwork.services.authentication;
 import com.sysmap.socialnetwork.services.security.IJwtService;
 import com.sysmap.socialnetwork.services.user.IUserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -12,7 +13,8 @@ public class AuthenticationService implements IAuthenticationService {
     private IUserService _userService;
     @Autowired
     private IJwtService _jwtService;
-
+    @Autowired
+    private PasswordEncoder _passwordEncoder;
 
     public AuthenticateResponse authenticate(AuthenticateRequest request) throws Exception {
         var user = _userService.getUser(request.email);
@@ -21,8 +23,8 @@ public class AuthenticationService implements IAuthenticationService {
             return null;
         }
 
-        if(user.getPassword().equals(request.password)){
-            throw new Exception("Senha inválida!");
+        if (!_passwordEncoder.matches(request.password, user.getPassword())){
+            throw new Exception("Credenciais inválidas!");
         }
 
         var token =  _jwtService.generateToken(user.getId());
